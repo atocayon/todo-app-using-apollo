@@ -44,7 +44,7 @@ const schema = gql`
 const resolvers = {
   Query: {
     todos: (parent, args, context, info) => {
-      return context.db.todos;
+      return context.db.todos.sort();
     },
 
     todoById: (parent, args, context, info) => {
@@ -54,7 +54,6 @@ const resolvers = {
   Mutation: {
     insertTodo: (_, { id, todo, dateAdded, priority }, context, info) => {
       const data = { id, todo, dateAdded, priority };
-      console.log(data);
       context.db.todos.push(data);
       pubsub.publish("TODO_INSERTED", { todoInserted: data });
       return context.db.todos;
