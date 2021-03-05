@@ -128,14 +128,12 @@ export default function Todo() {
     });
   };
 
-  const insertedTodo = todoInserted?.todo;
-
   return (
     <>
       <div className="container" style={{ marginTop: "5vh" }}>
         <h1>Todo</h1>
         <div className="row">
-          <div className="col-md-4">
+          <div className="col-md-4 col-sm-4">
             <input
               type="text"
               className="form-control"
@@ -144,7 +142,7 @@ export default function Todo() {
               onChange={handleTodoChange}
             />
           </div>
-          <div>
+          <div className="col-md-4 col-sm-4">
             <select
               className="form-control"
               name="priority"
@@ -156,16 +154,14 @@ export default function Todo() {
               ))}
             </select>
           </div>
-          <div className="col-md-4">
+          <div className="col-md-4 col-sm-4">
             <button className="btn btn-primary" onClick={addTodo}>
               Add
             </button>
           </div>
           <div className="container" style={{ marginTop: "5vh" }}>
-            <div></div>
-            {!loading && (
+            {todos && (
               <>
-                {insertedTodo && insertedTodo}
                 <TodosComponent
                   deleteTodo={deleteTodo}
                   data={todos}
