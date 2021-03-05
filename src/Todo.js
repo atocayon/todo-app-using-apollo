@@ -93,11 +93,10 @@ export default function Todo() {
   const [todo, setTodo] = useState({ todo: "", priority: "" });
   const selectData = ["Urgent", "Normal"];
 
-  const { data: todos, loading, subscribeToMore } = useQuery(TODOS);
+  const { data: todos, subscribeToMore } = useQuery(TODOS);
 
   const [todoData] = useMutation(INSERT_TODO);
   const [deleteTodoData] = useMutation(DELETE_TODO);
-  const { data: todoInserted } = useSubscription(SUBSCRIBE_TODO);
 
   const handleTodoChange = ({ target }) => {
     setTodo({ ...todo, [target.name]: target.value });
