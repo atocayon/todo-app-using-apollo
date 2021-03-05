@@ -2,11 +2,10 @@ const express = require("express");
 const { createServer } = require("http");
 const { PubSub } = require("apollo-server");
 const { ApolloServer, gql } = require("apollo-server-express");
+const { remove } = require("lodash");
 const pubsub = new PubSub();
 const db = {
-  todos: [
-    { id: 1, todo: "First Todo", dateAdded: "Not sure", priority: "Normal" },
-  ],
+  todos: [],
 };
 
 const schema = gql`
@@ -34,10 +33,12 @@ const schema = gql`
       dateAdded: String!
       priority: Priority!
     ): [Todo]
+
+    deleteTodo(id: ID!): [Todo]
   }
 
   type Subscription {
-    todoInserted: Todo
+    todoUpdate: [Todo]
   }
 `;
 
@@ -55,14 +56,20 @@ const resolvers = {
     insertTodo: (_, { id, todo, dateAdded, priority }, context, info) => {
       const data = { id, todo, dateAdded, priority };
       context.db.todos.push(data);
-      pubsub.publish("TODO_INSERTED", { todoInserted: data });
+      pubsub.publish("TODO_UPDATE", { todoUpdate: context.db.todos });
+      return context.db.todos;
+    },
+    deleteTodo: (_, { id }, context, info) => {
+      remove(context.db.todos, { id });
+      pubsub.publish("TODO_UPDATE", { todoUpdate: context.db.todos });
+
       return context.db.todos;
     },
   },
 
   Subscription: {
-    todoInserted: {
-      subscribe: () => pubsub.asyncIterator(["TODO_INSERTED"]),
+    todoUpdate: {
+      subscribe: () => pubsub.asyncIterator(["TODO_UPDATE"]),
     },
   },
 };

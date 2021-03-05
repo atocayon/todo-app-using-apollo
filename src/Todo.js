@@ -33,9 +33,9 @@ const INSERT_TODO = gql`
   }
 `;
 
-const SUBSCRIBE_TODO = gql`
-  subscription TodoSubscription {
-    todoInserted {
+const DELETE_TODO = gql`
+  mutation DeleteTodo($id: ID!) {
+    deleteTodo(id: $id) {
       id
       todo
       dateAdded
@@ -44,17 +44,48 @@ const SUBSCRIBE_TODO = gql`
   }
 `;
 
-const TodosComponent = ({ data, subscribe }) => {
+const SUBSCRIBE_TODO = gql`
+  subscription TodoSubscription {
+    todoUpdate {
+      id
+      todo
+      dateAdded
+      priority
+    }
+  }
+`;
+
+const TodosComponent = ({ data, subscribe, deleteTodo }) => {
   useEffect(() => {
     subscribe();
   }, []);
 
   return (
-    <ul>
-      {data.todos.map((item) => (
-        <li key={item.id}>{item.todo}</li>
-      ))}
-    </ul>
+    <div className="col-md-8">
+      <table className="table">
+        <tr>
+          <th>#</th>
+          <th>Task</th>
+          <th>Priority</th>
+          <th></th>
+        </tr>
+        {data.todos.map((item, index) => (
+          <tr key={item.id}>
+            <td>{index + 1}</td>
+            <td>{item.todo}</td>
+            <td>{item.priority}</td>
+            <td>
+              <button
+                className="btn btn-danger btn-sm"
+                onClick={deleteTodo.bind(null, item.id)}
+              >
+                delete
+              </button>
+            </td>
+          </tr>
+        ))}
+      </table>
+    </div>
   );
 };
 
@@ -65,6 +96,8 @@ export default function Todo() {
   const { data: todos, loading, subscribeToMore } = useQuery(TODOS);
 
   const [todoData] = useMutation(INSERT_TODO);
+  const [deleteTodoData] = useMutation(DELETE_TODO);
+  const { data: todoInserted } = useSubscription(SUBSCRIBE_TODO);
 
   const handleTodoChange = ({ target }) => {
     setTodo({ ...todo, [target.name]: target.value });
@@ -87,9 +120,19 @@ export default function Todo() {
     });
   };
 
+  const deleteTodo = (id) => {
+    deleteTodoData({
+      variables: {
+        id: id,
+      },
+    });
+  };
+
+  const insertedTodo = todoInserted?.todo;
+
   return (
     <>
-      <div className="container">
+      <div className="container" style={{ marginTop: "5vh" }}>
         <h1>Todo</h1>
         <div className="row">
           <div className="col-md-4">
@@ -122,7 +165,9 @@ export default function Todo() {
             <div></div>
             {!loading && (
               <>
+                {insertedTodo && insertedTodo}
                 <TodosComponent
+                  deleteTodo={deleteTodo}
                   data={todos}
                   subscribe={() =>
                     subscribeToMore({
@@ -130,10 +175,10 @@ export default function Todo() {
 
                       updateQuery: (prev, { subscriptionData }) => {
                         if (!subscriptionData.data) return prev;
-                        const inserted = subscriptionData.data.todoInserted;
+                        const inserted = subscriptionData.data.todoUpdate;
 
                         return Object.assign({}, prev, {
-                          todos: [...prev.todos, inserted],
+                          todos: [...inserted],
                         });
                       },
                     })
